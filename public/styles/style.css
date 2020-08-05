@@ -3,7 +3,7 @@ body, html, #container-form {
   width: 98%; height: 95%;
 }
 
-#run-btn{
+#run-btn, #create-btn{
   float: right;
 }
 
@@ -18,3 +18,6 @@ body, html, #container-form {
   margin-right: 5%;
 }
 
+#project-select{
+  width: 10%;
+}

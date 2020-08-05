@@ -10,13 +10,16 @@
 </head>
 <body> 
   <h1>HI</h1>
+    <button id="create-btn" style="margin: 0px 30px;">Create New Project</button>
+    <label for="project-select">Select Project</label>
+    <select name="Select Project" id="project-select">Select Project</select>
+
   <form id="container-form" action="/" method="POST">
-    <button id="run-btn">Run Code</button>
-  
+    <button id="run-btn">Run Code</button>  
     <textarea id="typing-area" name="paragraph_text"></textarea>  
   </form>
 
-
-  <script src="./scripts/index.js"></script>
+  <script src="/socket.io/socket.io.js"></script> 
+  <script src="/scripts/index.js"></script>
 </body>
 </html>
