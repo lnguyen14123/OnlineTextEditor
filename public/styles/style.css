@@ -1,14 +1,14 @@
 
 body, html, #container-form {
-  width: 98%; height: 95%;
+  height: 95%;
 }
 
-#run-btn, #create-btn{
+#run-btn, #create-btn, #save-btn{
   float: right;
 }
 
 #typing-area{
-  width: 95%; 
+  width: 90%; 
   height: 90%;
   font-size: 17px;
   background-color: grey;

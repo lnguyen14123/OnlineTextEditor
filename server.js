@@ -20,38 +20,17 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-//handles when user runs code, saves code within a database, (wont save onto db, uncomment code inside)
-app.post('/', (req, res)=>{
-  if(req.body != undefined){
-    //create a system to autosave, and save projects in the same document within the db
-    let project = new Project({
-        projectName:'New Project',
-        code:req.body.paragraph_text
-      });
 
-      // commenting because i dont want to fill up the db
-    // project.save()
-    //   .then((data)=>{
-    //     console.log(data);
-    //   })
-    //   .catch(err=>console.log(err));
-
-      io.emit('projectCode', project);
-  }
-  
-  res.redirect('/')
-});
-
-
-io.on('connection', socket=>{
+io.on('connection', async socket=>{
+  //give all projects of the current user to the front end
+  let projectArr = await Project.find();
+  socket.emit('userProjects', projectArr);
 
   socket.on('create', async ({projectName, code})=>{
     if(projectName!=null){
 
       let temp = await Project.find({projectName:projectName});
       
-      console.log(temp);
-
       if(temp.length>0) {
         socket.emit('status', 'A project with that name already exists!');
       }else{
@@ -60,13 +39,29 @@ io.on('connection', socket=>{
           code:code
         });
         newProject.save()
-        .then((data)=>{
-          console.log(data);
-        })
+        .then()
         .catch(err=>console.log(err));
-        socket.emit('status', 'createdProject');
+        
+        socket.emit('status', {status: 'createdProject', projectName:newProject.projectName});
       }
     }
+  });
+
+  socket.on('getProject', async (projectName)=>{
+    let project = await Project.findOne({projectName:projectName});
+    socket.emit('project', project);
+  });
+
+  socket.on('save', ({projectName, code})=>{
+
+    Project.update({projectName:projectName}, { $set: {code:code}})
+      .then(()=>{
+        socket.emit('status', {status: 'savedProject', projectName:projectName});
+      })
+      .catch((e)=>{
+        socket.emit('status', 'An error occured while saving, please try again!');
+      });
+
   });
 });
 
