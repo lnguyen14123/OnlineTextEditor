@@ -2,10 +2,13 @@ const socket = io();
 const typingArea = document.getElementById('typing-area');
 const runBtn = document.getElementById('run-btn');
 const createBtn = document.getElementById('create-btn');
-const saveBtn = document.getElementById('save-btn');
+const changeNameBtn = document.getElementById('change-name-btn');
 const selectProject = document.getElementById('project-select');
+const infoDisplay = document.getElementById('info-display');
 
 const TAB_SIZE = 4;
+const SAVE_INTERVALS = 3;
+let saved = true;
 
 //recieve code projects of user from the server
 socket.on('userProjects', projectArr=>{
@@ -13,19 +16,22 @@ socket.on('userProjects', projectArr=>{
     let newP = document.createElement('option');
     newP.appendChild(document.createTextNode(element.projectName));
     selectProject.appendChild(newP);
-  });
+  });  
   socket.emit('getProject', getProjectName());
 });
 
 //handle the response of project create
 socket.on('status', ({status, projectName}) => {
   if(status == 'createdProject'){
-    alert('New project created!');
+    infoDisplay.innerHTML = 'New project created!';
     let newP = document.createElement('p');
     newP.value = projectName;
     selectProject.appendChild(newP);
   } else if(status == 'savedProject'){
-    alert(projectName + " successfully saved!");
+    infoDisplay.innerHTML = projectName + " successfully saved!";
+  }else if(status == 'changedName'){
+    infoDisplay.innerHTML = 'Changed name to ' + projectName;
+    
   }else{
     alert(status);
   }
@@ -51,13 +57,6 @@ createBtn.addEventListener('click', (e)=>{
   socket.emit('create', {projectName ,code});
 });
 
-//save current project
-saveBtn.addEventListener('click', (e)=>{
-  let code = typingArea.value;
-  let projectName = getProjectName();
-  socket.emit('save', {projectName, code});
-});
-
 //run the project
 runBtn.addEventListener('click', (e)=>{
   console.clear();
@@ -68,9 +67,21 @@ runBtn.addEventListener('click', (e)=>{
   };
 });
 
+//change name of project
+changeNameBtn.addEventListener('click', (e)=>{
+  let newName = prompt('Choose a new name for the project!');
 
-//stop default tabbing functionality
+  while(newName==''){
+    newName = prompt('Error: project name must be longer than 0 characters');
+  }
+  let currentName = getProjectName();
+
+  socket.emit('changeName', {currentName ,newName});
+});
+
+//tabbing and delete tab functionality
 typingArea.addEventListener('keydown', (e)=>{
+  //stop default tabbing functionality
   if(e.key == "Tab"){
     insertTextAtCursor(typingArea, " ".repeat(TAB_SIZE));
     e.preventDefault();
@@ -82,7 +93,6 @@ typingArea.addEventListener('keydown', (e)=>{
       let tab = true;
       for(var i = cursorPos-TAB_SIZE; i<cursorPos; i++){
         if(code[i]!=' '){
-          console.log("|"+ code[i] + "|");
           tab = false;
         }
       }
@@ -95,6 +105,20 @@ typingArea.addEventListener('keydown', (e)=>{
     }
   }
 });
+
+//handle autosave
+typingArea.addEventListener('keypress', (e)=>{
+  //autosave functionality
+  if(saved){
+    setTimeout(()=>{
+      saveProject();
+      saved = true;
+    }, 1000*SAVE_INTERVALS);
+    saved = false;
+    infoDisplay.innerHTML = 'saving project . . .';
+  }
+});
+
 
 function insertTextAtCursor(el, text) {
   var val = el.value, endIndex, range, doc = el.ownerDocument;
@@ -115,3 +139,10 @@ function insertTextAtCursor(el, text) {
 function getProjectName(){
   return selectProject.options[selectProject.selectedIndex].value;
 }
+
+function saveProject(){
+  let code = typingArea.value;
+  let projectName = getProjectName();
+  socket.emit('save', {projectName, code});
+}
+

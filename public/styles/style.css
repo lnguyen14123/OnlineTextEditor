@@ -3,8 +3,8 @@ body, html, #container-form {
   height: 95%;
 }
 
-#run-btn, #create-btn, #save-btn{
-  float: right;
+#actions-menu{
+  border: white 10px so;
 }
 
 #typing-area{
@@ -20,4 +20,9 @@ body, html, #container-form {
 
 #project-select{
   width: 10%;
+}
+
+#actions-menu button, #actions-menu select, #actions-menu div {
+  display: inline;
+  margin: 0px 5%;
 }

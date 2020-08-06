@@ -63,6 +63,16 @@ io.on('connection', async socket=>{
       });
 
   });
+
+  socket.on('changeName', ({currentName, newName})=>{
+    Project.update({projectName:currentName}, { $set: {projectName:newName}})
+      .then(()=>{
+        socket.emit('status', {status: 'changedName', projectName:newName});
+      })
+      .catch((e)=>{
+        socket.emit('status', 'An error occured while changing project name, please try again!');
+      });
+  });
 });
 
 server.listen(PORT, ()=>console.log('SERVER RUNNING AT PORT: ' + PORT));
