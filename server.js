@@ -5,6 +5,10 @@ const Project = require('./models/Project');
 const User = require('./models/User');
 const http = require('http');
 const socketio = require('socket.io');
+const session = require('express-session');
+const { v4: uuidv4 } = require('uuid');
+const FileStore = require('session-file-store') (session);
+
 
 const app = express();
 const server = http.createServer(app);
@@ -19,8 +23,19 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopolo
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+//set up static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+//set up express session
+app.use(session({
+  genid: (req)=>{
+    return uuidv4();
+  },
+  store: new FileStore(),
+  secret:process.env.SESSION_SECRET,
+  resave:false,
+  saveUninitialized:true
+}));
 
 io.on('connection', async socket=>{
   //give all projects of the current user to the front end
