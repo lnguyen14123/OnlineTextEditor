@@ -24,16 +24,28 @@ socket.on('userProjects', projectArr=>{
 socket.on('status', ({status, projectName}) => {
   if(status == 'createdProject'){
     infoDisplay.innerHTML = 'New project created!';
-    let newP = document.createElement('p');
+    let newP = document.createElement('option');
+    newP.appendChild(document.createTextNode(projectName));
     newP.value = projectName;
     selectProject.appendChild(newP);
+
   } else if(status == 'savedProject'){
     infoDisplay.innerHTML = projectName + " successfully saved!";
-  }else if(status == 'changedName'){
-    infoDisplay.innerHTML = 'Changed name to ' + projectName;
-    
+
   }else{
     alert(status);
+  }
+});
+
+socket.on('changedName', ({projectName, newName})=>{
+  infoDisplay.innerHTML = 'Changed name to ' + newName + "!";
+  for(let option of selectProject.children){
+    console.log(option.value == projectName);
+    if(option.value == projectName){
+      option.removeChild(option.firstChild);
+      option.appendChild(document.createTextNode(newName));
+      break;
+    }
   }
 });
 

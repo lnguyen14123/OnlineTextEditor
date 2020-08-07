@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const Project = require('./models/Project');
+const User = require('./models/User');
 const http = require('http');
 const socketio = require('socket.io');
 
@@ -67,10 +68,10 @@ io.on('connection', async socket=>{
   socket.on('changeName', ({currentName, newName})=>{
     Project.update({projectName:currentName}, { $set: {projectName:newName}})
       .then(()=>{
-        socket.emit('status', {status: 'changedName', projectName:newName});
+        socket.emit('changedName', {projectName: currentName, newName:newName});
       })
       .catch((e)=>{
-        socket.emit('status', 'An error occured while changing project name, please try again!');
+        socket.emit('status', {status: 'An error occured while changing project name, please try again!'});
       });
   });
 });
