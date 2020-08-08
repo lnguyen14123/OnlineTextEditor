@@ -3,11 +3,47 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const User = require('../../models/User');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 let router = express.Router();
 
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
+
+passport.use(new LocalStrategy(
+  { usernameField: 'email' },
+  async (email, password, done) => {    
+    const user = await User.findOne({email:email});
+
+    if(user!=null){
+
+      console.log(user.password + " " + password);
+
+      bcrypt.compare(password, user.password, function(err, result) {
+
+        console.log(result);
+        if (result){
+          console.log('Local strategy returned true')
+          return done(null, user)
+        }else {
+          console.log('Local strategy returned false')
+        }
+      });
+    }else{
+      console.log("Local strategy returned email can't be found")
+    }
+  }
+));
+
+// tell passport how to serialize the user
+passport.serializeUser((user, done) => {
+  console.log('Inside serializeUser callback. User id is save to the session file store here')
+  done(null, user.id);
+});
+
+router.use(passport.initialize());
+router.use(passport.session());
 
 router.get('/login', (req, res)=>{
   res.sendFile(path.join(__dirname, 'login.html'));
@@ -19,38 +55,12 @@ router.get('/register', (req, res)=>{
 
 router.post('/login', async (req, res, next) => {
   let userData = req.body;
-
-  try{
-    let user = await User.findOne({email:userData.email});
-    if(user!=null){
-      bcrypt.compare(userData.password, user.password, function(err, result) {
-        if (result){
-          res.send('CORRECT');
-        }else {
-          res.send('INCORRECT');
-        }
-      });
-    }else{
-      res.send("Email can't be found")
-    }
-    // Load hash from the db, which was preivously stored 
-
-  }catch(err){
-    console.log(err);
-    res.send(err)
-  }
-
-  // passport.authenticate('local', (err, user, info) => {
-  //   console.log('Inside passport.authenticate() callback');
-  //   console.log(`req.session.passport: ${JSON.stringify(req.session.passport)}`)
-  //   console.log(`req.user: ${JSON.stringify(req.user)}`)
-  //   req.login(user, (err) => {
-  //     console.log('Inside req.login() callback')
-  //     console.log(`req.session.passport: ${JSON.stringify(req.session.passport)}`)
-  //     console.log(`req.user: ${JSON.stringify(req.user)}`)
-  //     return res.send('You were authenticated & logged in!\n');
-  //   })
-  // })(req, res, next);
+  
+  passport.authenticate('local', (err, user, info) => {
+    req.login(user, (err) => {
+      return res.send('You were authenticated & logged in!\n');
+    })
+  })(req, res, next);
 })
 
 router.post('/register', async (req, res)=>{
@@ -62,7 +72,7 @@ router.post('/register', async (req, res)=>{
     res.send("Error: Password must be 6 characters or longer");
   }else{
 
-    let another = await User.findOne({email:email});
+    let another = await User.findOne({email:userData.email});
 
 
 
@@ -79,6 +89,5 @@ router.post('/register', async (req, res)=>{
     });
   }
 });
-
 
 module.exports = router;

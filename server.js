@@ -8,9 +8,6 @@ const socketio = require('socket.io');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const FileStore = require('session-file-store') (session);
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-
 
 const app = express();
 const server = http.createServer(app);
@@ -18,30 +15,6 @@ const io = socketio.listen(server);
 const PORT = process.env.PORT || 3000;
 
 require('dotenv').config();
-
-passport.use(new LocalStrategy(
-  { usernameField: 'email' },
-  (email, password, done) => {
-    console.log('Inside local strategy callback')
-    
-    const user = null;
-    User.findOne({email:email})
-      .then(e=>user=e)
-      .catch(err=>console.log(err));
-
-    if(email === user.email && password === user.password) {
-      console.log('Local strategy returned true')
-      return done(null, user)
-    }
-  }
-));
-
-// tell passport how to serialize the user
-passport.serializeUser((user, done) => {
-  console.log('Inside serializeUser callback. User id is save to the session file store here')
-  done(null, user.id);
-});
-
 
 mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -62,9 +35,6 @@ app.use(session({
   resave:false,
   saveUninitialized:true
 }));
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 //set up routes
 const users = require('./routes/users/users');
