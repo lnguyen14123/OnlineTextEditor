@@ -8,6 +8,7 @@ const socketio = require('socket.io');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const FileStore = require('session-file-store') (session);
+const expressLayouts = require('express-ejs-layouts');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,9 +34,16 @@ app.use(session({
   saveUninitialized:true
 }));
 
+//set up views (.ejs files), .render with express instead of with .send
+app.use(expressLayouts);
+app.set('view engine', 'ejs');
+
+
+//set up static public files
+app.use(express.static(path.join(__dirname, 'public')));
+
 //set up routes
-const users = require('./routes/users/users');
-app.use('/users', users);
+app.use('/users', require('./public/scripts/users'));
 
 io.on('connection', async socket=>{
   //give all projects of the current user to the front end
@@ -92,3 +100,4 @@ io.on('connection', async socket=>{
 });
 
 server.listen(PORT, ()=>console.log('SERVER RUNNING AT PORT: ' + PORT));
+
