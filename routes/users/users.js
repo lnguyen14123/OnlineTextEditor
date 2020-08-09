@@ -24,23 +24,29 @@ passport.use(new LocalStrategy(
 
         console.log(result);
         if (result){
-          console.log('Local strategy returned true')
-          return done(null, user)
+          return done(null, user, {message:'ok'})
         }else {
-          console.log('Local strategy returned false')
+          return done(null, false, { message: 'Incorrect password.' });
         }
       });
     }else{
-      console.log("Local strategy returned email can't be found")
+      return done(null, false, { message: 'Email not found.' });
     }
   }
 ));
 
 // tell passport how to serialize the user
 passport.serializeUser((user, done) => {
-  console.log('Inside serializeUser callback. User id is save to the session file store here')
   done(null, user.id);
 });
+
+// tell passport how to deserialize the user
+passport.deserializeUser(async (id, done) => {
+  await User.findById(id, (err, user)=>{
+    done(err, user);
+  });
+});
+
 
 router.use(passport.initialize());
 router.use(passport.session());
@@ -49,17 +55,40 @@ router.get('/login', (req, res)=>{
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+router.get('/logout', (req, res)=>{
+  console.log("HEY");
+  req.logout();
+  res.redirect('/users/login');
+});
+
 router.get('/register', (req, res)=>{
   res.sendFile(path.join(__dirname, 'register.html'));
 });
+
+// router.get('/editor', (req, res, next)=>{
+//   if(req.isAuthenticated()){
+//     console.log('yoy');
+//     next();
+//   } else {
+//     res.redirect('/users/login')
+//   }
+// });
+
+router.use(express.static(path.join(__dirname, "editor")));
 
 router.post('/login', async (req, res, next) => {
   let userData = req.body;
   
   passport.authenticate('local', (err, user, info) => {
-    req.login(user, (err) => {
-      return res.send('You were authenticated & logged in!\n');
-    })
+
+    if(info.message == "ok"){
+      req.login(user, (err) => {
+        return res.sendFile(path.join(__dirname, 'editor', 'editor.html'));
+      })  
+    } else{
+      return res.send(info.message);
+    }
+
   })(req, res, next);
 })
 

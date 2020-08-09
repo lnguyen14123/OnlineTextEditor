@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 
 const ProjectSchema = mongoose.Schema({
-
+  // user: {
+  //   String,
+  //   required: true
+  // },
   projectName: {
     type: String,
     required:true
@@ -10,7 +13,6 @@ const ProjectSchema = mongoose.Schema({
     type: String,
     required:true
   }
-
 });
 
 module.exports = mongoose.model('Project', ProjectSchema);

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./styles/style.css">
+  <title>Document</title>
+</head>
+<body>
+  <h1>HI</h1>
+  <div id="actions-menu">
+    <button id="create-btn" style="margin: 0px 30px;">Create New Project</button>
+    <button id="run-btn">Run Code</button>  
+    <button id="change-name-btn">Change Project Name</button>  
+    <div id="info-display"> </div>  
+    <label for="project-select">Select Project</label>
+    <select name="Select Project" id="project-select" style="margin: 0;">Select Project</select>
+
+    <form action="/users/logout" method="GET">
+      <button id="change-name-btn" >Logout</button>  
+    </form>
+  </div>
+
+
+  <textarea id="typing-area" name="paragraph_text"></textarea>  
+  <script src="/socket.io/socket.io.js"></script> 
+  <script src="./scripts/index.js"></script>
+</body>
+
+</html>

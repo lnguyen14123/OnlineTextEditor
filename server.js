@@ -22,9 +22,6 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopolo
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-//set up static files
-app.use(express.static(path.join(__dirname, 'public')));
-
 //set up express session
 app.use(session({
   genid: (req)=>{
@@ -39,7 +36,6 @@ app.use(session({
 //set up routes
 const users = require('./routes/users/users');
 app.use('/users', users);
-
 
 io.on('connection', async socket=>{
   //give all projects of the current user to the front end
