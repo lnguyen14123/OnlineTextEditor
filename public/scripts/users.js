@@ -7,7 +7,9 @@ const LocalStrategy = require('passport-local');
 const path = require('path');
 const io = require('../../socketio');
 
+const saltRounds = 10;
 const router = express.Router();
+
 
 passport.use(new LocalStrategy(
   { usernameField: 'email' },
@@ -77,6 +79,7 @@ router.post('/register', async (req, res)=>{
 
     let another = await User.findOne({email:userData.email});
     if(!another){
+
       bcrypt.genSalt(saltRounds, (err, salt) => {
         bcrypt.hash(userData.password1, salt, async (err, hash) => {
             // Now we can store the password hash in db.
@@ -85,9 +88,12 @@ router.post('/register', async (req, res)=>{
             password:hash
           });
           let data = await user.save();
-          res.send(data);
+
+          res.redirect("/users/login");
         });
       });  
+    } else{
+      res.send("Error: Email is already in use!");
     }
   }
 });
@@ -99,7 +105,7 @@ router.post('/login', (req, res, next)=>{
   passport.authenticate('local', (err, user, info) => {
 
     if(info.message == "ok"){
-      req.login(user, (err) => {
+      req.login(user, (err) => {    
         return res.render('editor');
       })  
     } else{
@@ -111,25 +117,32 @@ router.post('/login', (req, res, next)=>{
 
 //handle logout
 router.get('/logout', (req, res)=>{
+  req.session.destroy();
   req.logout();
   res.redirect('/users/login');
 });
 
 io.on('connection', async socket=>{
-  console.log('HEY');
-  //give all projects of the current user to the front end
-  let projectArr = await Project.find();
-  socket.emit('userProjects', projectArr);
+  //give all projects of the current user to the front end  
 
-  socket.on('create', async ({projectName, code})=>{
+
+  socket.on('start', async userInfo=>{
+    let projectArr = await Project.find({email:userInfo.user.email});
+
+    socket.emit('userProjects', projectArr);
+  });
+
+
+  socket.on('create', async ({projectName, code, userEmail})=>{
     if(projectName!=null){
 
       let temp = await Project.find({projectName:projectName});
-      
+
       if(temp.length>0) {
         socket.emit('status', 'A project with that name already exists!');
       }else{
         let newProject = new Project({
+          email:userEmail,
           projectName:projectName,
           code:code
         });
@@ -142,8 +155,8 @@ io.on('connection', async socket=>{
     }
   });
 
-  socket.on('getProject', async (projectName)=>{
-    let project = await Project.findOne({projectName:projectName});
+  socket.on('getProject', async ({projectName, userEmail})=>{
+    let project = await Project.findOne({projectName:projectName, email:userEmail});
     socket.emit('project', project);
   });
 
@@ -168,6 +181,19 @@ io.on('connection', async socket=>{
         socket.emit('status', {status: 'An error occured while changing project name, please try again!'});
       });
   });
+});
+
+router.get('/api/user_data', function(req, res) {
+  if (req.user === undefined) {
+    // The user is not logged in
+    console.log('yoy');
+    res.json({});
+  } else {
+
+    res.json({
+        user: req.user
+    });
+  }
 });
 
 module.exports = router;

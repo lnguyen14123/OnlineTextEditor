@@ -31,7 +31,8 @@ app.use(session({
   store: new FileStore(),
   secret:process.env.SESSION_SECRET,
   resave:false,
-  saveUninitialized:true
+  saveUninitialized:true,
+  maxAge: 1000*60*60*24
 }));
 
 //set up views (.ejs files), .render with express instead of with .send
@@ -44,5 +45,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //set up routes
 app.use('/users', require('./public/scripts/users'));
+
+app.get('/', (req, res)=>{
+  res.redirect('/users/login');
+});
 
 server.listen(PORT, ()=>console.log('SERVER RUNNING AT PORT: ' + PORT));

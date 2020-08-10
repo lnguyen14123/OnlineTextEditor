@@ -10,14 +10,24 @@ const TAB_SIZE = 4;
 const SAVE_INTERVALS = 3;
 let saved = true;
 
-//recieve code projects of user from the server
+let userInfo = null;
+
+fetch('http://localhost:3000/users/api/user_data')
+  .then(response=>response.json())
+  .then(data=>{
+    userInfo = data
+    socket.emit('start', userInfo);
+  })
+  .catch(err=>console.log(err));
+
+  //recieve code projects of user from the server
 socket.on('userProjects', projectArr=>{
   projectArr.forEach(element => {
     let newP = document.createElement('option');
     newP.appendChild(document.createTextNode(element.projectName));
     selectProject.appendChild(newP);
   });  
-  socket.emit('getProject', getProjectName());
+  socket.emit('getProject', {projectName: getProjectName(), userEmail: userInfo.user.email});
 });
 
 //handle the response of project create
@@ -53,9 +63,15 @@ socket.on('project', (project) => {
   typingArea.value = project.code;
 });
 
-
 selectProject.onchange = (e)=>{
-  socket.emit('getProject', getProjectName());
+  if(!saved){
+    e.preventDefault();
+    alert("Please don't change projects while saving");
+    //this still needs to be fixed btw
+
+  }else{
+    socket.emit('getProject',{projectName: getProjectName(), userEmail:userInfo.user.email} );
+  }
 };
 
 //create a new project
@@ -66,7 +82,13 @@ createBtn.addEventListener('click', (e)=>{
   while(projectName==''){
     projectName = prompt('Error: project name must be longer than 0 characters');
   }
-  socket.emit('create', {projectName ,code});
+
+  if(selectProject.childNodes.length>1 || code == ''){
+    code = ' ';
+  }
+  console.log(selectProject.childNodes.length);
+
+  socket.emit('create', {projectName ,code, userEmail:userInfo.user.email});
 });
 
 //run the project
@@ -122,8 +144,9 @@ typingArea.addEventListener('keydown', (e)=>{
 typingArea.addEventListener('keypress', (e)=>{
   //autosave functionality
   if(saved){
+    let projectName = getProjectName();
     setTimeout(()=>{
-      saveProject();
+      socket.emit('save', {projectName, code:typingArea.value});
       saved = true;
     }, 1000*SAVE_INTERVALS);
     saved = false;
@@ -151,10 +174,3 @@ function insertTextAtCursor(el, text) {
 function getProjectName(){
   return selectProject.options[selectProject.selectedIndex].value;
 }
-
-function saveProject(){
-  let code = typingArea.value;
-  let projectName = getProjectName();
-  socket.emit('save', {projectName, code});
-}
-
